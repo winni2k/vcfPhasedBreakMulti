@@ -71,8 +71,6 @@ int main() {
       exit(1);
     }
 
-    vector<
-
   }
 
   return 0;

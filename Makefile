@@ -10,18 +10,18 @@ CPPFLAGS := -Wall -std=c++11
 
 all: vcfPhasedBreakMulti
 
-%.hpp.gch : %.hpp
-	$(CPP) $(CPPFLAGS) $<
-
-vcfPhasedBreakMulti: vcfPhasedBreakMulti.cpp vcf_parser.hpp.gch
+vcfPhasedBreakMulti: vcfPhasedBreakMulti.cpp vcf_parser.hpp
 	$(CPP) $(CPPFLAGS) $< -o $@
 
 test: test_vcf_parser
 	./$<
 
-test_vcf_parser: test_vcf_parser.cpp vcf_parser.hpp.gch
+test_vcf_parser: test_vcf_parser.cpp vcf_parser.hpp
 	$(CPP) $(CPPFLAGS) $< -o $@
 
-.PHONY: test all
+clean:
+	rm -f test_vcf_parser vcfPhasedBreakMulti *.gch *.o
+
+.PHONY: test all clean
 
 ### Makefile ends here
