@@ -8,19 +8,16 @@
 CPP := g++
 CPPFLAGS := -Wall -std=c++11
 
-all: vcfPhasedBreakMulti
+all:
+	$(MAKE) -C src
 
-vcfPhasedBreakMulti: vcfPhasedBreakMulti.cpp vcf_parser.hpp
-	$(CPP) $(CPPFLAGS) $< -o $@
-
-test: test_vcf_parser
-	./$<
-
-test_vcf_parser: test_vcf_parser.cpp vcf_parser.hpp
-	$(CPP) $(CPPFLAGS) $< -o $@
+test:
+	$(MAKE) -C src
+	cd t && ./runTests.pl
 
 clean:
-	rm -f test_vcf_parser vcfPhasedBreakMulti *.gch *.o
+	$(MAKE) -C src clean
+	$(MAKE) -C t clean
 
 .PHONY: test all clean
 
