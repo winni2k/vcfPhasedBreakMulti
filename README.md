@@ -1,10 +1,24 @@
 vcfPhasedBreakMulti
 ===================
 
-boost::spirit::qi based VCF GT field parser for breaking multiallelic variants into multiple biallelic variants
+Very simple, but hopefully fast <code>boost::spirit::qi</code> based VCF GT field parser for breaking multiallelic variants into multiple biallelic variants
 
 
 SYNOPSIS
 --------
 
-./vcfPhasedBreakMulti < input.vcf > output.vcf
+    ./vcfPhasedBreakMulti < input.vcf > output.vcf
+
+
+INPUT FILE
+----------
+
+Needs to be a valid VCF file with only a GT format field.  All genotypes need to be phased.  I use the following commands to get an input file that matches those requirements:
+
+```
+# strip everything but GT field using binary from vcflib
+vcflib/bin/vcfkeepgeno file1.vcf GT > file1.onlyGT.vcf
+
+# now split multiallelic sites
+/vcfPhasedBreakMulti < file1.onlyGT.vcf > file1.onlyGT.asBiAllelics.vcf
+```
