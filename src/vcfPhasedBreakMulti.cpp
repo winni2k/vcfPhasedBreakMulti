@@ -2,12 +2,42 @@
 #include "vcf_parser.hpp"
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/program_options.hpp>
 using namespace std;
 using namespace GTParser;
+namespace po = boost::program_options;
 
-int main() {
+int main(int ac, char **av) {
+
+  /*
+    Code for defining input options.
+
+   */
+
+  po::options_description desc("Allowed options");
+  desc.add_options()("help", "produce help message")(
+      "brokenLinesFile", po::value<string>(),
+      "Don't exit when encountering a broken line.  Instead, write it to "
+      "brokenLinesFile and move on.  All broken lines are not printed to "
+      "stdout");
+
+  po::variables_map vm;
+  po::store(po::parse_command_line(ac, av, desc), vm);
+  po::notify(vm);
+
+  if (vm.count("help")) {
+    cout << desc << "\n";
+    return 1;
+  }
+
+  std::ofstream ofBrokenLines;
+  if (vm.count("brokenLinesFile")) {
+    ofBrokenLines.open(vm["brokenLinesFile"].as<string>(),
+                       std::ofstream::out | std::ofstream::trunc);
+  }
 
   // expect vcf formatted file as input
   string input;
@@ -81,13 +111,19 @@ int main() {
     // This list must be <= 9 (google SPIRIT_ARGUMENTS_LIMIT)
     //
     string::const_iterator pos = input.cbegin();
-    bool success =
-        qi::parse(pos, input.cend(), grammar, firstCols[0], genomic_pos,
-                  firstCols[1], firstCols[2], firstCols[3], firstCols[4],
-                  firstCols[5], firstCols[6], firstCols[7], genotypes);
-    if (!success) {
-      cerr << "Parse failed" << endl;
-      exit(1);
+    try {
+
+      qi::parse(pos, input.cend(), grammar, firstCols[0], genomic_pos,
+                firstCols[1], firstCols[2], firstCols[3], firstCols[4],
+                firstCols[5], firstCols[6], firstCols[7], genotypes);
+    }
+    catch (std::exception &e) {
+      if (ofBrokenLines.is_open())
+        ofBrokenLines << input << "\n";
+      else{
+          cerr << e.what() << endl;
+          exit(1);
+      }
     }
     vector<string> alts;
     boost::split(alts, firstCols[3], boost::is_any_of(","));

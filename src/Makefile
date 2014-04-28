@@ -12,10 +12,12 @@ CPPFLAGS := -Wall -std=c++11
 all: CPPFLAGS += -O3
 debug: CPPFLAGS += -O1 -g
 
+LIBS := -lboost_program_options
+
 all: $(BIN)
 
 $(BIN): vcfPhasedBreakMulti.cpp vcf_parser.hpp
-	$(CPP) $(CPPFLAGS) $< -o $@
+	$(CPP) $(CPPFLAGS) $< -o $@ $(LIBS)
 
 test: test_vcf_parser
 	./$<
