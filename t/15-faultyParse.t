@@ -34,7 +34,7 @@ ok( system("../bin/$bin < $inFile  2> /dev/null 1> /dev/null") != 0,
 
 ok(
     system(
-"../bin/$bin --brokenLinesFile $resDir/multiall.brokenLines.txt < $inFile  > /dev/null"
+"../bin/$bin --malformedLinesFile $resDir/multiall.brokenLines.txt < $inFile  > /dev/null"
       ) == 0,
     "$bin completed successfully"
 );

@@ -19,10 +19,13 @@ int main(int ac, char **av) {
 
   po::options_description desc("Allowed options");
   desc.add_options()("help", "produce help message")(
-      "brokenLinesFile", po::value<string>(),
-      "Don't exit when encountering a broken line.  Instead, write it to "
-      "brokenLinesFile and move on.  All broken lines are not printed to "
-      "stdout");
+      "malformedLinesFile", po::value<string>(),
+      "Don't exit when encountering a malformed line.  Instead, write it to "
+      "malformedLinesFile and move on.  All malformed lines are not printed to "
+      "stdout")("keepInfo", "Default behavior is to throw out the INFO fields "
+                            "when a line is broken.  Turn on this flag to to "
+                            "keep the old INFO line.  However, it likely won't "
+                            "be accurate anymore.");
 
   po::variables_map vm;
   po::store(po::parse_command_line(ac, av, desc), vm);
@@ -33,11 +36,15 @@ int main(int ac, char **av) {
     return 1;
   }
 
-  std::ofstream ofBrokenLines;
-  if (vm.count("brokenLinesFile")) {
-    ofBrokenLines.open(vm["brokenLinesFile"].as<string>(),
+  std::ofstream ofMalformedLines;
+  if (vm.count("malformedLinesFile")) {
+      string file = vm["malformedLinesFile"].as<string>();
+    ofMalformedLines.open(file,
                        std::ofstream::out | std::ofstream::trunc);
+    cerr << "Writing malformed lines to " << file << endl;
   }
+
+  bool keepInfo = vm.count("keepInfo") > 0;
 
   // expect vcf formatted file as input
   string input;
@@ -64,7 +71,7 @@ int main(int ac, char **av) {
   size_t numCols = std::count(input.begin(), input.end(), '\t') + 1;
   if (numCols < 7) {
     cerr << "Too few columns in VCF CHROM line (less than 7 columns)" << endl;
-    cerr << "Broken line: " << input << endl;
+    cerr << "Malformed line: " << input << endl;
     exit(1);
   }
   // print crom line
@@ -118,11 +125,11 @@ int main(int ac, char **av) {
                 firstCols[5], firstCols[6], firstCols[7], genotypes);
     }
     catch (std::exception &e) {
-      if (ofBrokenLines.is_open())
-        ofBrokenLines << input << "\n";
-      else{
-          cerr << e.what() << endl;
-          exit(1);
+      if (ofMalformedLines.is_open())
+        ofMalformedLines << input << "\n";
+      else {
+        cerr << e.what() << endl;
+        exit(1);
       }
     }
     vector<string> alts;
@@ -130,7 +137,9 @@ int main(int ac, char **av) {
     assert(alts.size() > 1);
 
     // throw away info information as it is unlikely to still be true
-    firstCols[6] = ".";
+    // unless told otherwise...
+    if(!keepInfo)
+        firstCols[6] = ".";
 
     // loop to print out each alternate allele's own line
     unsigned altNum = 0;
