@@ -10,6 +10,17 @@ using namespace std;
 using namespace GTParser;
 namespace po = boost::program_options;
 
+// print out first cols
+void printFirstCols(const vector<string> &firstCols, unsigned genomic_pos,
+                    const string &alt) {
+
+  assert(firstCols.size() == 8);
+  cout << firstCols[0] << "\t" << genomic_pos << "\t.\t" << firstCols[2] << "\t"
+       << alt;
+  for (unsigned i = 4; i < 8; ++i)
+    cout << "\t" << firstCols[i];
+}
+
 int main(int ac, char **av) {
 
   /*
@@ -21,11 +32,15 @@ int main(int ac, char **av) {
   desc.add_options()("help", "produce help message")(
       "malformedLinesFile", po::value<string>(),
       "Don't exit when encountering a malformed line.  Instead, write it to "
-      "malformedLinesFile and move on.  All malformed lines are not printed to "
-      "stdout")("keepInfo", "Default behavior is to throw out the INFO fields "
-                            "when a line is broken.  Turn on this flag to to "
-                            "keep the old INFO line.  However, it likely won't "
-                            "be accurate anymore.");
+      "malformedLinesFile and move on.  All malformed lines are not "
+      "printed to stdout")("keepInfo",
+                           "Default behavior is to throw out the INFO fields "
+                           "when a line is broken.  Turn on this flag to to "
+                           "keep the old INFO line.  However, it likely won't "
+                           "be accurate anymore.")(
+      "recodeAsBiallelic", "Instead of breaking multiallelics into multiple "
+                           "biallelics, just recode all alternate alleles as a "
+                           "single allele");
 
   po::variables_map vm;
   po::store(po::parse_command_line(ac, av, desc), vm);
@@ -38,13 +53,13 @@ int main(int ac, char **av) {
 
   std::ofstream ofMalformedLines;
   if (vm.count("malformedLinesFile")) {
-      string file = vm["malformedLinesFile"].as<string>();
-    ofMalformedLines.open(file,
-                       std::ofstream::out | std::ofstream::trunc);
+    string file = vm["malformedLinesFile"].as<string>();
+    ofMalformedLines.open(file, std::ofstream::out | std::ofstream::trunc);
     cerr << "Writing malformed lines to " << file << endl;
   }
 
-  bool keepInfo = vm.count("keepInfo") > 0;
+  const bool keepInfo = vm.count("keepInfo") > 0;
+  const bool recodeAsBiallelic = vm.count("recodeAsBiallelic") > 0;
 
   // expect vcf formatted file as input
   string input;
@@ -138,33 +153,59 @@ int main(int ac, char **av) {
 
     // throw away info information as it is unlikely to still be true
     // unless told otherwise...
-    if(!keepInfo)
-        firstCols[6] = ".";
+    if (!keepInfo)
+      firstCols[6] = ".";
 
-    // loop to print out each alternate allele's own line
-    unsigned altNum = 0;
-    for (auto alt : alts) {
-      ++altNum;
+    if (recodeAsBiallelic) {
+
+      // create new alternative allele that is a join of all alts by ":"
+      string alt = alts[0];
+      for (unsigned i = 1; i < alts.size(); ++i) {
+        alt += ":";
+        alt += alts[i];
+      }
       // print out first cols
-      cout << firstCols[0] << "\t" << genomic_pos << "\t.\t" << firstCols[2]
-           << "\t" << alt;
-      for (unsigned i = 0; i < 4; ++i)
-        cout << "\t" << firstCols[4 + i];
+      printFirstCols(firstCols, genomic_pos, alt);
 
       // print out genotypes
       for (auto gg : genotypes) {
         cout << "\t";
-        if (gg.allele1 == altNum)
+        if (gg.allele1 != 0)
           cout << 1;
         else
           cout << 0;
         cout << gg.phase;
-        if (gg.allele2 == altNum)
+        if (gg.allele2 != 0)
           cout << 1;
         else
           cout << 0;
       }
       cout << "\n";
+
+    } else {
+      // loop to print out each alternate allele's own line
+      unsigned altNum = 0;
+      for (auto alt : alts) {
+        ++altNum;
+
+        // print out first cols
+        printFirstCols(firstCols, genomic_pos, alt);
+
+        // print out genotypes
+        for (auto gg : genotypes) {
+          cout << "\t";
+          if (gg.allele1 == altNum)
+            cout << 1;
+          else
+            cout << 0;
+          cout << gg.phase;
+          if (gg.allele2 == altNum)
+            cout << 1;
+          else
+            cout << 0;
+        }
+        cout << "\n";
+      }
     }
   }
 
