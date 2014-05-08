@@ -12,18 +12,22 @@ See all command line options
     ./vcfPhasedBreakMulti --help
 
 Break multiallelics into biallelics
+
     ./vcfPhasedBreakMulti < input.vcf > output.vcf
 
 Don't die when encountering malformed VCF lines.  Write the malformed
 VCF lines to malformed.txt
+
     ./vcfPhasedBreakMulti --malformedLinesFile malformed.txt < input.vcf >
     output.vcf
 
 Keep INFO field when breaking multiallelics into multiple lines.
+
     ./vcfPhasedBreakMulti --keepInfo < input.vcf > output.vcf
 
 Instead of breaking the multiallelics into multiple lines, simply
 recode all alternative alleles as a single allele.
+
     ./vcfPhasedBreakMulti --recodeAsBiallelic < input.vcf > output.vcf
 
 Input file
