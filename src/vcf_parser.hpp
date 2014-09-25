@@ -1,4 +1,7 @@
 
+#ifndef _VCF_PARSER_HPP
+#define _VCF_PARSER_HPP 1
+
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix_stl.hpp>
 namespace qi = boost::spirit::qi;
@@ -160,3 +163,5 @@ struct vcf_grammar
                                  std::string &, std::vector<t_genotype> &>()> vcf_line;
 };
 };
+
+#endif
